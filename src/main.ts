@@ -73,7 +73,7 @@ let dolly = new THREE.Object3D(  );
 dolly.position.set(0, 0, 10);
 dolly.add( camera );
 let dummyCam = new THREE.Object3D();
-camera.add( dummyCam );
+// camera.add( dummyCam );
 scene.add( dolly )
 let origin = new THREE.Vector3();
 
@@ -110,6 +110,7 @@ function buildControllers( parent: THREE.Object3D = scene ){
   for(let i=0; i<=1; i++){
     const controller = renderer.xr.getController( i );
     controller.add( line.clone() );
+    if (i === 0) controller.add(dummyCam)
     controller.userData.selectPressed = false;
     parent.add( controller );
     controllers.push( controller );
@@ -129,12 +130,11 @@ function selectPressed(){
 }
 
 
-
 function moveDolly(dt: number){
   // if (this.proxy === undefined) return;
   
   // const wallLimit = 1.3;
-  const speed = 0.00001;
+  const speed = 0.000002;
   let pos = dolly.position.clone();
   pos.y += 1;
   
