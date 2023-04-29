@@ -65,9 +65,9 @@ function setBackgroundColor (bgColor: string | number) {
 // }
 
 // --------------------------------------------------- //
-function onSelectStart() {    
+function onSelectStart(event: any) {    
   // this.userData.selectPressed = true;
-  // console.log(event)
+  console.log(event)
 }
 
 function onSelectEnd() {
@@ -85,7 +85,7 @@ controllers.forEach((controller) => {
 });
 
 function buildControllers( parent = scene ){
-  debugger
+  // debugger
   const controllerModelFactory = new XRControllerModelFactory();
   const geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, -1 ) ] );
 
