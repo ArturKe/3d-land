@@ -7,6 +7,8 @@ import { envGen } from './environment';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
 
+import ThreeMeshUI from 'three-mesh-ui';
+
 const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 100 );
 camera.position.z = 1;
 camera.position.y = 0.3;
@@ -47,6 +49,8 @@ function animation( time: number ) {
     moveDolly(time);
   }
 
+  ThreeMeshUI.update();
+
 	renderer.render( scene, camera );
 
 }
@@ -68,9 +72,9 @@ function setBackgroundColor (bgColor: string | number) {
 //   const curentEnv = newEnv
 // }
 
-// --------------------------------------------------- //
+// ---------------------------------------- Dolly ------------------------------------------ //
 let dolly = new THREE.Object3D(  );
-dolly.position.set(0, 0, 10);
+dolly.position.set(0, 0, 2);
 dolly.add( camera );
 let dummyCam = new THREE.Object3D();
 // camera.add( dummyCam );
@@ -88,7 +92,6 @@ function onSelectEnd(this: any) {
   // console.log(event)
 }
 
-// let controllers = buildControllers(dolly);
 let controllers = buildControllers(dolly);
 
 
@@ -123,78 +126,56 @@ function buildControllers( parent: THREE.Object3D = scene ){
   return controllers;
 }
 
-// ----------------------------------------------- Dolly ----------------------------- //
-
 function selectPressed(){
   return ( controllers !== undefined && (controllers[0].userData.selectPressed || controllers[1].userData.selectPressed) );    
 }
 
 
 function moveDolly(dt: number){
-  // if (this.proxy === undefined) return;
-  
-  // const wallLimit = 1.3;
   const speed = 0.000002;
   let pos = dolly.position.clone();
   pos.y += 1;
-  
   let dir = new THREE.Vector3();
+
   //Store original dolly rotation
-  
   const quaternion = dolly.quaternion.clone();
 
   //Get rotation for movement from the headset pose
   let qt = new THREE.Quaternion
-  // dolly.quaternion.copy(dummyCam.getWorldQuaternion(qt));
   dummyCam.getWorldQuaternion(qt)
+
   dolly.quaternion.copy(qt);
   dolly.getWorldDirection(dir);
-  // dir.negate();
-  // raycaster.set(pos, dir);
-
-  // let blocked = false;
-
-  // let intersect = this.raycaster.intersectObject(this.proxy);
-  // if (intersect.length>0){
-  //     if (intersect[0].distance < wallLimit) blocked = true;
-  // }
-
-
   dolly.translateZ(-dt*speed);
   pos = dolly.getWorldPosition( origin );
 
-  //cast left
-  // dir.set(-1,0,0);
-  // dir.applyMatrix4(dolly.matrix);
-  // dir.normalize();
-  // this.raycaster.set(pos, dir);
-
-  // intersect = this.raycaster.intersectObject(this.proxy);
-  // if (intersect.length>0){
-  //     if (intersect[0].distance<wallLimit) this.dolly.translateX(wallLimit-intersect[0].distance);
-  // }
-
-  //cast right
-  // dir.set(1,0,0);
-  // dir.applyMatrix4(dolly.matrix);
-  // dir.normalize();
-  // this.raycaster.set(pos, dir);
-
-  // intersect = this.raycaster.intersectObject(this.proxy);
-  // if (intersect.length>0){
-  //     if (intersect[0].distance<wallLimit) this.dolly.translateX(intersect[0].distance-wallLimit);
-  // }
-
-  //cast down
-  // dir.set(0,-1,0);
-  // pos.y += 1.5;
-  // this.raycaster.set(pos, dir);
-  
-  // intersect = this.raycaster.intersectObject(this.proxy);
-  // if (intersect.length>0){
-  //     this.dolly.position.copy( intersect[0].point );
-  // }
-
-  // //Restore the original rotation
+  //Restore the original rotation
   dolly.quaternion.copy( quaternion );
 }
+
+// ------------------------------------------------------------- UI --------?
+const container = new ThreeMeshUI.Block({
+  width: 1.2,
+  height: 0.7,
+  padding: 0.2,
+  fontFamily: './Roboto-msdf.json',
+  fontTexture: './Roboto-msdf.png',
+ });
+ 
+container.position.set( 0, 1, -1.8 );
+container.rotation.x = -0.55;
+ 
+  const text = new ThreeMeshUI.Text({
+  content: 'This library supports line break friendly characters',
+  fontSize: 0.055
+  });
+  const text2 = new ThreeMeshUI.Text({
+    content: 'This some new text, description.',
+    fontSize: 0.075
+    });
+
+ container.add( text );
+ container.add( text2 );
+ 
+ // scene is a THREE.Scene (see three.js)
+ scene.add( container );
