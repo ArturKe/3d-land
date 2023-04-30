@@ -47,14 +47,26 @@ export function envGen (nameGroup: string = 'Environment_0') {
         metalness: 0.0
     } );
     const floor = new THREE.Mesh( floorGeometry, floorMaterial );
+    floor.name = 'floorPlane'
     floor.rotation.x = - Math.PI / 2;
     floor.position.y = offsetY;
     floor.receiveShadow = true;
     floorGroup.add( floor );
   
     // Grid -------------------//
-    const grid = new THREE.GridHelper(500,100)
-    grid.position.y = offsetY + 0.02
+    // const grid = new THREE.GridHelper(500,100)
+
+
+    var grid: any = new THREE.GridHelper( 200, 40, 0x000000, 0x000000 );
+    grid.position.y = offsetY + 0.03
+    grid.material.opacity = 0.2;
+    grid.material.transparent = true;
+
     floorGroup.add(grid)
     return floorGroup
-  }
+  }		
+  
+  // const ground = new THREE.Mesh( new THREE.PlaneBufferGeometry( 200, 200 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
+  // ground.rotation.x = - Math.PI / 2;
+  // this.scene.add( ground );
+

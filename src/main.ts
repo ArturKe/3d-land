@@ -10,8 +10,12 @@ import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerM
 import ThreeMeshUI from 'three-mesh-ui';
 
 let baseReferenceSpace: XRReferenceSpace | null
+let userText: any = new ThreeMeshUI.Text({
+  content: 'This library supports line break friendly characters',
+  fontSize: 0.055
+});
 
-const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 100 );
+const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 200 );
 camera.position.z = 1;
 camera.position.y = 0.3;
 camera.rotation.x = -0.2
@@ -37,18 +41,20 @@ const mesh = new THREE.Mesh( geometry, material );
 mesh.position.y = 0.2
 
 scene.add( mesh );
-const environment = envGen('Env_1')
-scene.add(environment);
+scene.add(envGen('Env_1'));
 console.log(scene)
+const teleportTarget = scene.getObjectByName('floorPlane')
+
 
 // renderer
 const renderer = new THREE.WebGLRenderer( { antialias: true } );
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setPixelRatio( window.devicePixelRatio );
 renderer.xr.enabled = true;
 renderer.xr.addEventListener( 'sessionstart', () => { console.log(renderer.xr.getReferenceSpace()), baseReferenceSpace = renderer.xr.getReferenceSpace() });
-console.log(renderer.xr)
-console.log(renderer.xr.getControllerGrip(0))
+// console.log(renderer.xr)
+// console.log(renderer.xr.getControllerGrip(0))
 document.body.appendChild( VRButton.createButton( renderer ) );
 
 renderer.setAnimationLoop( animation );
@@ -68,6 +74,7 @@ function animation( time: number ) {
   updateControllers()
 
   ThreeMeshUI.update();
+  userText.set({content: `Time: ${Math.round(time)}` + '\n'})
 
 	renderer.render( scene, camera );
 
@@ -78,7 +85,8 @@ function animation( time: number ) {
 
 function setBackgroundColor (bgColor: string | number) {
   scene.background = new THREE.Color(bgColor);
-  scene.fog = new THREE.FogExp2(bgColor, 0.01);
+  // scene.fog = new THREE.FogExp2(bgColor, 0.01);
+  scene.fog = new THREE.Fog( bgColor, 10, 70 );
 }
 
 // const listEnvs = ['Env_1', 'Env_2', 'Env_3']
@@ -92,7 +100,7 @@ function setBackgroundColor (bgColor: string | number) {
 
 // ---------------------------------------- Dolly ------------------------------------------ //
 let dolly = new THREE.Object3D(  );
-dolly.position.set(0, 0, 2);
+// dolly.position.set(0, 0, 2);
 dolly.add( camera );
 let dummyCam = new THREE.Object3D();
 // camera.add( dummyCam );
@@ -193,20 +201,18 @@ const container = new ThreeMeshUI.Block({
   fontTexture: './Roboto-msdf.png',
  });
  
-container.position.set( 0, 1, -1.8 );
+container.position.set( -2, 1, -2.8 );
 container.rotation.x = -0.55;
  
-  const text = new ThreeMeshUI.Text({
-  content: 'This library supports line break friendly characters',
-  fontSize: 0.055
-  });
+
   const text2 = new ThreeMeshUI.Text({
     content: 'This some new text, description.',
     fontSize: 0.075
     });
 
- container.add( text );
+ container.add( userText );
  container.add( text2 );
+ console.log(userText)
  
  // scene is a THREE.Scene (see three.js)
  scene.add( container );
@@ -223,7 +229,7 @@ container.rotation.x = -0.55;
       raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
       raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
 
-      const intersects = raycaster.intersectObjects([environment]);
+      const intersects = raycaster.intersectObjects([teleportTarget ? teleportTarget : new THREE.Object3D]);
 
       if ( intersects.length > 0 ) {
         INTERSECTION = intersects[ 0 ].point;
