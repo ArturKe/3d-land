@@ -313,9 +313,12 @@ function updateButtonsInfo (inputSources: any[]) {
         }
     })
     // console.log(inputState)
-    btnInfo.set({content: `Thumbstick_X: ${inputState.right.thumbstick_x.toString().slice(0, 6)}`
-       + '\n' + `Thumbstick_Y: ${inputState.right.thumbstick_y.toString().slice(0, 6)}` + '\n' + `Thumbstick_btn: ${inputState.right.trigger}`
-       + '\n' + `Trigger: ${inputState.right.trigger}` + '\n' + `Squize: ${inputState.right.thumbstick_btn}` 
+    btnInfo.set({content: 
+      `Thumbstick_X: ${inputState.right.thumbstick_x.toString().slice(0, 6)}` + '\n' + 
+      `Thumbstick_Y: ${inputState.right.thumbstick_y.toString().slice(0, 6)}` + '\n' + 
+      `Thumbstick_btn: ${inputState.right.thumbstick_btn}` + '\n' + 
+      `Trigger: ${inputState.right.trigger}` + '\n' + 
+      `Squize: ${inputState.right.squize}` 
       })
 }
 }
