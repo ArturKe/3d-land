@@ -29,9 +29,11 @@ setBackgroundColor('#00aaff')  // -!!! for Scene
 
 // Teleport
 const marker = new THREE.Mesh(
-  new THREE.CircleGeometry( 0.25, 32 ).rotateX( - Math.PI / 2 ),
+  // new THREE.CircleGeometry( 0.25, 32 ).rotateX( - Math.PI / 2 ),
+  new THREE.TorusGeometry( 0.1, 0.03, 4, 18 ).rotateX( - Math.PI / 2 ), 
   new THREE.MeshBasicMaterial( { color: 0x808080 } )
 );
+marker.visible = false
 scene.add( marker );
 const raycaster = new THREE.Raycaster();
 const tempMatrix = new THREE.Matrix4();
@@ -290,7 +292,7 @@ function updateButtonsInfo (inputSources: any[]) {
 } else if (useStandard && type!=""){
     // console.log('Moove')
     let inputState = {
-      right: {trigger: false, thumbstick_x: 0, thumbstick_y: 0, thumbstick_btn: false},
+      right: {trigger: false, squize: false, thumbstick_x: 0, thumbstick_y: 0, thumbstick_btn: false},
       left: {}
     }
     inputSources.forEach( inputSource => {
@@ -303,7 +305,7 @@ function updateButtonsInfo (inputSources: any[]) {
         if ( inputSource.handedness == 'right'){
             // rsphere.position.set( 0.5, 1.6, -1 ).add( vec3.set( gp.axes[offset], -gp.axes[offset + 1], 0 ));
             // rsphere.material = material;
-            inputState['right'] = {trigger: btnPressed, thumbstick_x: gp.axes[offset], thumbstick_y: -gp.axes[offset + 1], thumbstick_btn: gp.buttons[1].pressed}
+            inputState['right'] = {trigger: gp.buttons[0].pressed, squize: gp.buttons[1].pressed, thumbstick_x: gp.axes[offset], thumbstick_y: -gp.axes[offset + 1], thumbstick_btn: btnPressed}
         }else if ( inputSource.handedness == 'left'){
             // lsphere.position.set( -0.5, 1.6, -1 ).add(vec3.set( gp.axes[offset], -gp.axes[offset + 1], 0 ));
             // lsphere.material = material;
@@ -311,9 +313,9 @@ function updateButtonsInfo (inputSources: any[]) {
         }
     })
     // console.log(inputState)
-    btnInfo.set({content: `Thumbstick_X: ${inputState.right.thumbstick_x}`
-       + '\n' + `Thumbstick_Y: ${inputState.right.thumbstick_y}` + '\n' + `Thumbstick_btn: ${inputState.right.thumbstick_btn}`
-       + '\n' + `Trigger: ${inputState.right.trigger}`
+    btnInfo.set({content: `Thumbstick_X: ${inputState.right.thumbstick_x.toString().slice(0, 6)}`
+       + '\n' + `Thumbstick_Y: ${inputState.right.thumbstick_y.toString().slice(0, 6)}` + '\n' + `Thumbstick_btn: ${inputState.right.trigger}`
+       + '\n' + `Trigger: ${inputState.right.trigger}` + '\n' + `Squize: ${inputState.right.thumbstick_btn}` 
       })
 }
 }
