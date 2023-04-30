@@ -14,6 +14,10 @@ let userText: any = new ThreeMeshUI.Text({
   content: 'This library supports line break friendly characters',
   fontSize: 0.055
 });
+let btnInfo: any = new ThreeMeshUI.Text({
+  content: '',
+  fontSize: 0.065
+});
 
 const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 200 );
 camera.position.z = 1;
@@ -71,7 +75,15 @@ function animation( time: number ) {
   // if (renderer.xr.isPresenting && selectPressed()){
   //   moveDolly(time);
   // }
-  updateControllers()
+
+  // XR ---------- //
+  if ( renderer.xr.isPresenting ){
+    const session: any = renderer.xr.getSession();
+    const inputSources = session.inputSources;
+
+    updateButtonsInfo(inputSources)
+    updateControllers()
+  }
 
   ThreeMeshUI.update();
   userText.set({content: `Time: ${Math.round(time)}` + '\n'})
@@ -195,8 +207,12 @@ function buildControllers( parent: THREE.Object3D = scene ){
 // ------------------------------------------------------------- UI --------?
 const container = new ThreeMeshUI.Block({
   width: 1.2,
-  height: 0.7,
-  padding: 0.2,
+  height: 0.8,
+  padding: 0.1,
+  borderRadius: 0.05,
+  // textAlign: 'end',
+  // justifyContent: 'end',
+  textAlign: 'left',
   fontFamily: './Roboto-msdf.json',
   fontTexture: './Roboto-msdf.png',
  });
@@ -206,13 +222,14 @@ container.rotation.x = -0.55;
  
 
   const text2 = new ThreeMeshUI.Text({
-    content: 'This some new text, description.',
+    content: 'This some new text, description.' + '\n',
     fontSize: 0.075
     });
 
  container.add( userText );
  container.add( text2 );
- console.log(userText)
+ container.add( btnInfo );
+//  console.log(userText)
  
  // scene is a THREE.Scene (see three.js)
  scene.add( container );
@@ -239,4 +256,64 @@ container.rotation.x = -0.55;
 
   if ( INTERSECTION ) marker.position.copy( INTERSECTION );
   marker.visible = INTERSECTION !== undefined;
+}
+
+let getInputSources = true, type ='', useStandard = false
+
+function updateButtonsInfo (inputSources: any[]) {
+  if ( getInputSources ){    
+    const info: object[] = [];
+    
+    inputSources.forEach( inputSource => {
+        // debugger
+        console.log("Init")
+        const gp = inputSource.gamepad;
+        const axes = gp.axes;
+        const buttons = gp.buttons;
+        const mapping = gp.mapping;
+        useStandard = (mapping == 'xr-standard');
+        const gamepad = { axes, buttons, mapping };
+        const handedness = inputSource.handedness;
+        const profiles: any[] = inputSource.profiles;
+        type = "";
+        profiles.forEach( profile => {
+            if (profile.indexOf('touchpad')!=-1) type = 'touchpad';
+            if (profile.indexOf('thumbstick')!=-1) type = 'thumbstick';
+        });
+        const targetRayMode = inputSource.targetRayMode;
+        info.push({ gamepad, handedness, profiles, targetRayMode });
+    });
+        
+    console.log( JSON.stringify(info) );
+    
+    getInputSources = false;
+} else if (useStandard && type!=""){
+    // console.log('Moove')
+    let inputState = {
+      right: {trigger: false, thumbstick_x: 0, thumbstick_y: 0, thumbstick_btn: false},
+      left: {}
+    }
+    inputSources.forEach( inputSource => {
+        const gp = inputSource.gamepad;
+        const thumbstick = (type=='thumbstick');
+        const offset = (thumbstick) ? 2 : 0;
+        const btnIndex = (thumbstick) ? 3 : 2;
+        const btnPressed = gp.buttons[btnIndex].pressed;
+        // const material = (btnPressed) ? materials[1] : materials[0];
+        if ( inputSource.handedness == 'right'){
+            // rsphere.position.set( 0.5, 1.6, -1 ).add( vec3.set( gp.axes[offset], -gp.axes[offset + 1], 0 ));
+            // rsphere.material = material;
+            inputState['right'] = {trigger: btnPressed, thumbstick_x: gp.axes[offset], thumbstick_y: -gp.axes[offset + 1], thumbstick_btn: gp.buttons[1].pressed}
+        }else if ( inputSource.handedness == 'left'){
+            // lsphere.position.set( -0.5, 1.6, -1 ).add(vec3.set( gp.axes[offset], -gp.axes[offset + 1], 0 ));
+            // lsphere.material = material;
+            inputState['left'] = {thumbstick_x: gp.axes[offset], thumbstick_y: -gp.axes[offset + 1], thumbstick_btn: btnPressed}
+        }
+    })
+    // console.log(inputState)
+    btnInfo.set({content: `Thumbstick_X: ${inputState.right.thumbstick_x}`
+       + '\n' + `Thumbstick_Y: ${inputState.right.thumbstick_y}` + '\n' + `Thumbstick_btn: ${inputState.right.thumbstick_btn}`
+       + '\n' + `Trigger: ${inputState.right.trigger}`
+      })
+}
 }
