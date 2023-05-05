@@ -5,7 +5,7 @@ import './style.css'
 import * as THREE from 'three';
 import { envGen } from './environment';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
-import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
+// import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
 import { updateButtonsInfo } from './character'
 
 import ThreeMeshUI from 'three-mesh-ui';
@@ -173,7 +173,7 @@ controllers.forEach((controller) => {
 
 function buildControllers( parent: THREE.Object3D = scene ){
   // debugger
-  const controllerModelFactory = new XRControllerModelFactory();
+  // const controllerModelFactory = new XRControllerModelFactory();
   const geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, -1 ) ] );
 
   const line = new THREE.Line( geometry );
