@@ -56,11 +56,15 @@ const tempMatrix = new THREE.Matrix4();
 let INTERSECTION: THREE.Vector3 | undefined
 // /Teleport 
 
-const geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
-const material = new THREE.MeshNormalMaterial();
-const mesh = new THREE.Mesh( geometry, material );
-mesh.position.y = 0.2
-scene.add( mesh );
+function cubeCreate (size: {x: number, y: number, z: number}) {
+  const geometry = new THREE.BoxGeometry( size.x, size.y, size.z );
+  const material = new THREE.MeshNormalMaterial();
+  return new THREE.Mesh( geometry, material );
+}
+
+const cube = cubeCreate({x: 0.2, y: 0.2, z: 0.2})
+cube.position.y = 0.2
+scene.add( cube );
 
 scene.add(envGen('Env_1'));
 console.log(scene)
@@ -79,8 +83,8 @@ renderer.setAnimationLoop( animation );
 function animation( time: number ) {
   // console.log(time)
 
-	mesh.rotation.x = time / 2000;
-	mesh.rotation.y = time / 1000;
+	cube.rotation.x = time / 2000;
+	cube.rotation.y = time / 1000;
 
   // if (renderer.xr.isPresenting && selectPressed()){
   //   moveDolly(time);
@@ -98,12 +102,12 @@ function animation( time: number ) {
     const session: any = renderer.xr.getSession();
     const inputSources = session.inputSources;
 
-    
     updateControllers()
-    ThreeMeshUI.update();
+    
     if (!(Math.round(time)%4)) {
       btnInfo.set({content: updateButtonsInfo(inputSources)})
       userText.set({content: `Time: ${Math.round(time)}` + '\n'})
+      ThreeMeshUI.update();
     }
   }
 	renderer.render( scene, camera );
@@ -186,7 +190,10 @@ function buildControllers( parent: THREE.Object3D = scene ){
     controllers.push( controller );
     
     const grip = renderer.xr.getControllerGrip( i );
-    grip.add( controllerModelFactory.createControllerModel( grip ) );
+    const mesh = cubeCreate({x: 0.02, y: 0.06, z: 0.02})
+    mesh.rotation.x = 0.9
+    // grip.add( controllerModelFactory.createControllerModel( grip ) );
+    grip.add( mesh );
     parent.add( grip );
   }
   
