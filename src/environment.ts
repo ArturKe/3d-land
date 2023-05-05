@@ -9,15 +9,10 @@ export function envGen (nameGroup: string = 'Environment_0') {
   
     envGroup.add(createLights())
     envGroup.add(geometryFloor())
-    const loader = new GLTFLoader();
-
-    loader.load('./farm_house_ver1.glb', (object) => {
-      console.log(object)
-      object.scene.position.z = -3
-      object.scene.scale.set(2,2,2)
-      object.scene.rotation.y = 1.5
-      envGroup.add(object.scene)
-    })
+    
+    fileLoader('./farm_house_ver1.glb', envGroup, {x: 0, y: 0, z: -3}, 2)
+    // fileLoader('./venus-ver1_2k.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
+    fileLoader('./Venus_LOD_1.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
   
     return envGroup
   }
@@ -70,3 +65,13 @@ export function envGen (nameGroup: string = 'Environment_0') {
   // ground.rotation.x = - Math.PI / 2;
   // this.scene.add( ground );
 
+function fileLoader (link:string, parent:THREE.Group, pos: {x: number, y: number, z: number}, scale: number = 1) {
+  const loader = new GLTFLoader();
+  loader.load(link, (object) => {
+    console.log(object)
+    object.scene.position.set(pos.x, pos.y, pos.z)
+    object.scene.scale.set(scale,scale,scale)
+    object.scene.rotation.y = 1.5
+    parent.add(object.scene)
+  })
+}

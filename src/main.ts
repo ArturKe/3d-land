@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { envGen } from './environment';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
+import { updateButtonsInfo } from './character'
 
 import ThreeMeshUI from 'three-mesh-ui';
 
@@ -19,6 +20,7 @@ let btnInfo: any = new ThreeMeshUI.Text({
   fontSize: 0.065
 });
 
+// First Init
 const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 200 );
 camera.position.z = 1;
 camera.position.y = 0.3;
@@ -27,6 +29,20 @@ camera.rotation.x = -0.2
 const scene = new THREE.Scene();
 setBackgroundColor('#00aaff')  // -!!! for Scene
 
+// renderer
+const renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.outputEncoding = THREE.sRGBEncoding
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.xr.enabled = true;
+renderer.xr.addEventListener( 'sessionstart', () => { console.log(renderer.xr.getReferenceSpace()), baseReferenceSpace = renderer.xr.getReferenceSpace() });
+
+// console.log(renderer.xr.getControllerGrip(0))
+
+// / Init
+
+
+// Scene create ---------------------------------------------------
 // Teleport
 const marker = new THREE.Mesh(
   // new THREE.CircleGeometry( 0.25, 32 ).rotateX( - Math.PI / 2 ),
@@ -42,32 +58,24 @@ let INTERSECTION: THREE.Vector3 | undefined
 
 const geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
 const material = new THREE.MeshNormalMaterial();
-
 const mesh = new THREE.Mesh( geometry, material );
 mesh.position.y = 0.2
-
 scene.add( mesh );
+
 scene.add(envGen('Env_1'));
 console.log(scene)
 const teleportTarget = scene.getObjectByName('floorPlane')
+// Scene create --------------------------------------------------- /
 
+console.log(renderer.info.memory)
+console.log(renderer.info.render)
 
-// renderer
-const renderer = new THREE.WebGLRenderer( { antialias: true } );
-renderer.outputEncoding = THREE.sRGBEncoding
-renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.setPixelRatio( window.devicePixelRatio );
-renderer.xr.enabled = true;
-renderer.xr.addEventListener( 'sessionstart', () => { console.log(renderer.xr.getReferenceSpace()), baseReferenceSpace = renderer.xr.getReferenceSpace() });
-// console.log(renderer.xr)
-// console.log(renderer.xr.getControllerGrip(0))
 document.body.appendChild( VRButton.createButton( renderer ) );
-
-renderer.setAnimationLoop( animation );
 document.body.appendChild( renderer.domElement );
+renderer.setAnimationLoop( animation );
+
 
 // animation
-
 function animation( time: number ) {
   // console.log(time)
 
@@ -78,20 +86,26 @@ function animation( time: number ) {
   //   moveDolly(time);
   // }
 
+  // Делитель частоты обновления
+  // if (!(Math.round(time)%4)) {
+  //   console.log('hello')
+    // console.log('Triangles: ' + renderer.info.render.triangles)
+    // console.log('Calls: ' + renderer.info.render.calls)
+  // }
+
   // XR ---------- //
   if ( renderer.xr.isPresenting ){
     const session: any = renderer.xr.getSession();
     const inputSources = session.inputSources;
 
-    updateButtonsInfo(inputSources)
+    btnInfo.set({content: updateButtonsInfo(inputSources)})
     updateControllers()
+    ThreeMeshUI.update();
+    if (!(Math.round(time)%4)) {
+      userText.set({content: `Time: ${Math.round(time)}` + '\n'})
+    }
   }
-
-  ThreeMeshUI.update();
-  userText.set({content: `Time: ${Math.round(time)}` + '\n'})
-
 	renderer.render( scene, camera );
-
 }
 
 // Нужен параметр текущего окружения, который можно перезаписывать. currentEnvironment
@@ -145,7 +159,6 @@ function onSelectEnd(this: any) {
 }
 
 let controllers = buildControllers(dolly);
-
 
 controllers.forEach((controller) => {
   controller.addEventListener( 'connected', (e) => {console.log(e)} )
@@ -235,90 +248,28 @@ container.rotation.x = -0.55;
  
  // scene is a THREE.Scene (see three.js)
  scene.add( container );
+ console.log(container)
 
  // --------------------------
 
- function updateControllers () {
+function updateControllers () {
   INTERSECTION = undefined
 
   controllers.map(controller => {
     if ( controller.userData.selectPressed === true ) {
-      tempMatrix.identity().extractRotation( controller.matrixWorld );
+        tempMatrix.identity().extractRotation( controller.matrixWorld );
 
-      raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
-      raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
+        raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
+        raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
 
-      const intersects = raycaster.intersectObjects([teleportTarget ? teleportTarget : new THREE.Object3D]);
+        const intersects = raycaster.intersectObjects([teleportTarget ? teleportTarget : new THREE.Object3D]);
 
-      if ( intersects.length > 0 ) {
-        INTERSECTION = intersects[ 0 ].point;
-      }
+        if ( intersects.length > 0 ) {
+            INTERSECTION = intersects[ 0 ].point;
+        }
     }
   })
 
   if ( INTERSECTION ) marker.position.copy( INTERSECTION );
   marker.visible = INTERSECTION !== undefined;
-}
-
-let getInputSources = true, type ='', useStandard = false
-
-function updateButtonsInfo (inputSources: any[]) {
-  if ( getInputSources ){    
-    const info: object[] = [];
-    
-    inputSources.forEach( inputSource => {
-        // debugger
-        console.log("Init")
-        const gp = inputSource.gamepad;
-        const axes = gp.axes;
-        const buttons = gp.buttons;
-        const mapping = gp.mapping;
-        useStandard = (mapping == 'xr-standard');
-        const gamepad = { axes, buttons, mapping };
-        const handedness = inputSource.handedness;
-        const profiles: any[] = inputSource.profiles;
-        type = "";
-        profiles.forEach( profile => {
-            if (profile.indexOf('touchpad')!=-1) type = 'touchpad';
-            if (profile.indexOf('thumbstick')!=-1) type = 'thumbstick';
-        });
-        const targetRayMode = inputSource.targetRayMode;
-        info.push({ gamepad, handedness, profiles, targetRayMode });
-    });
-        
-    console.log( JSON.stringify(info) );
-    
-    getInputSources = false;
-} else if (useStandard && type!=""){
-    // console.log('Moove')
-    let inputState = {
-      right: {trigger: false, squize: false, thumbstick_x: 0, thumbstick_y: 0, thumbstick_btn: false},
-      left: {}
-    }
-    inputSources.forEach( inputSource => {
-        const gp = inputSource.gamepad;
-        const thumbstick = (type=='thumbstick');
-        const offset = (thumbstick) ? 2 : 0;
-        const btnIndex = (thumbstick) ? 3 : 2;
-        const btnPressed = gp.buttons[btnIndex].pressed;
-        // const material = (btnPressed) ? materials[1] : materials[0];
-        if ( inputSource.handedness == 'right'){
-            // rsphere.position.set( 0.5, 1.6, -1 ).add( vec3.set( gp.axes[offset], -gp.axes[offset + 1], 0 ));
-            // rsphere.material = material;
-            inputState['right'] = {trigger: gp.buttons[0].pressed, squize: gp.buttons[1].pressed, thumbstick_x: gp.axes[offset], thumbstick_y: -gp.axes[offset + 1], thumbstick_btn: btnPressed}
-        }else if ( inputSource.handedness == 'left'){
-            // lsphere.position.set( -0.5, 1.6, -1 ).add(vec3.set( gp.axes[offset], -gp.axes[offset + 1], 0 ));
-            // lsphere.material = material;
-            inputState['left'] = {thumbstick_x: gp.axes[offset], thumbstick_y: -gp.axes[offset + 1], thumbstick_btn: btnPressed}
-        }
-    })
-    // console.log(inputState)
-    btnInfo.set({content: 
-      `Thumbstick_X: ${inputState.right.thumbstick_x.toString().slice(0, 6)}` + '\n' + 
-      `Thumbstick_Y: ${inputState.right.thumbstick_y.toString().slice(0, 6)}` + '\n' + 
-      `Thumbstick_btn: ${inputState.right.thumbstick_btn}` + '\n' + 
-      `Trigger: ${inputState.right.trigger}` + '\n' + 
-      `Squize: ${inputState.right.squize}` 
-      })
-}
 }
