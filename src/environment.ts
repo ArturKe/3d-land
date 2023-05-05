@@ -11,8 +11,8 @@ export function envGen (nameGroup: string = 'Environment_0') {
     envGroup.add(geometryFloor())
     
     fileLoader('./farm_house_ver1.glb', envGroup, {x: 0, y: 0, z: -3}, 2)
-    // fileLoader('./venus-ver1_2k.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
-    fileLoader('./Venus_LOD_1.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
+    fileLoader('./venus-ver1_2k.glb', envGroup, {x: 4, y: 0, z: -3}, 0.3)
+    // fileLoader('./Venus_LOD_1.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
   
     return envGroup
   }

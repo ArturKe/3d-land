@@ -98,10 +98,11 @@ function animation( time: number ) {
     const session: any = renderer.xr.getSession();
     const inputSources = session.inputSources;
 
-    btnInfo.set({content: updateButtonsInfo(inputSources)})
+    
     updateControllers()
     ThreeMeshUI.update();
     if (!(Math.round(time)%4)) {
+      btnInfo.set({content: updateButtonsInfo(inputSources)})
       userText.set({content: `Time: ${Math.round(time)}` + '\n'})
     }
   }
