@@ -6,11 +6,12 @@ import * as THREE from 'three';
 import { envGen } from './environment';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 // import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
-import { updateButtonsInfo } from './character'
+// import { updateButtonsInfo } from './character'
+import { initControllers, updateControllers } from './character'
 
 import ThreeMeshUI from 'three-mesh-ui';
 
-let baseReferenceSpace: XRReferenceSpace | null
+// let baseReferenceSpace: XRReferenceSpace | null
 let userText: any = new ThreeMeshUI.Text({
   content: 'This library supports line break friendly characters',
   fontSize: 0.055
@@ -35,25 +36,18 @@ renderer.outputEncoding = THREE.sRGBEncoding
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.xr.enabled = true;
-renderer.xr.addEventListener( 'sessionstart', () => { console.log(renderer.xr.getReferenceSpace()), baseReferenceSpace = renderer.xr.getReferenceSpace() });
+// renderer.xr.addEventListener( 'sessionstart', () => { console.log(renderer.xr.getReferenceSpace()), baseReferenceSpace = renderer.xr.getReferenceSpace() });
 
 // console.log(renderer.xr.getControllerGrip(0))
 
 // / Init
-
+initControllers(renderer, scene, camera)
 
 // Scene create ---------------------------------------------------
-// Teleport
-const marker = new THREE.Mesh(
-  // new THREE.CircleGeometry( 0.25, 32 ).rotateX( - Math.PI / 2 ),
-  new THREE.TorusGeometry( 0.1, 0.03, 4, 18 ).rotateX( - Math.PI / 2 ), 
-  new THREE.MeshBasicMaterial( { color: 0x808080 } )
-);
-marker.visible = false
-scene.add( marker );
-const raycaster = new THREE.Raycaster();
-const tempMatrix = new THREE.Matrix4();
-let INTERSECTION: THREE.Vector3 | undefined
+
+// const raycaster = new THREE.Raycaster();
+// const tempMatrix = new THREE.Matrix4();
+// let INTERSECTION: THREE.Vector3 | undefined
 // /Teleport 
 
 function cubeCreate (size: {x: number, y: number, z: number}) {
@@ -99,15 +93,17 @@ function animation( time: number ) {
 
   // XR ---------- //
   if ( renderer.xr.isPresenting ){
-    const session: any = renderer.xr.getSession();
-    const inputSources = session.inputSources;
+    // const session: any = renderer.xr.getSession();
+    // const inputSources = session.inputSources;
 
-    updateControllers()
+    if (teleportTarget) updateControllers(teleportTarget)
     
-    if (!(Math.round(time)%4)) {
-      btnInfo.set({content: updateButtonsInfo(inputSources)})
-      userText.set({content: `Time: ${Math.round(time)}` + '\n'})
+    if (!(Math.round(time)%6)) {
+      // btnInfo.set({content: updateButtonsInfo(inputSources)})
+      // userText.set({content: `Time: ${Math.round(time)}` + '\n'})
       ThreeMeshUI.update();
+      // console.log('Triangles: ' + renderer.info.render.triangles)
+      // console.log('Calls: ' + renderer.info.render.calls)
     }
   }
 	renderer.render( scene, camera );
@@ -132,73 +128,6 @@ function setBackgroundColor (bgColor: string | number) {
 // }
 
 // ---------------------------------------- Dolly ------------------------------------------ //
-let dolly = new THREE.Object3D(  );
-// dolly.position.set(0, 0, 2);
-dolly.add( camera );
-let dummyCam = new THREE.Object3D();
-// camera.add( dummyCam );
-scene.add( dolly )
-// let origin = new THREE.Vector3(); // For dolly
-
-
-function onSelectStart(this: any, event: any) {    
-  this.userData.selectPressed = true;
-  console.log(event)
-  console.log(this)
-}
-
-function onSelectEnd(this: any) {
-  this.userData.selectPressed = false;
-  let teleportSpaceOffset: XRReferenceSpace
-
-  // console.log(event)
-  if ( INTERSECTION !== undefined ) {
-    const offsetPosition = { x: - INTERSECTION.x, y: - INTERSECTION.y, z: - INTERSECTION.z, w: 1 };
-    const offsetRotation = new THREE.Quaternion();
-    const transform = new XRRigidTransform( offsetPosition, offsetRotation );
-    if (baseReferenceSpace !== null) {
-      teleportSpaceOffset = baseReferenceSpace.getOffsetReferenceSpace( transform )
-      renderer.xr.setReferenceSpace( teleportSpaceOffset );
-    }
-  } 
-}
-
-let controllers = buildControllers(dolly);
-
-controllers.forEach((controller) => {
-  controller.addEventListener( 'connected', (e) => {console.log(e)} )
-  controller.addEventListener( 'selectstart', onSelectStart);
-  controller.addEventListener( 'selectend', onSelectEnd );
-});
-
-function buildControllers( parent: THREE.Object3D = scene ){
-  // debugger
-  // const controllerModelFactory = new XRControllerModelFactory();
-  const geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, -1 ) ] );
-
-  const line = new THREE.Line( geometry );
-  line.scale.z = 1;
-  
-  const controllers = [];
-  
-  for(let i=0; i<=1; i++){
-    const controller = renderer.xr.getController( i );
-    controller.add( line.clone() );
-    if (i === 0) controller.add(dummyCam)
-    controller.userData.selectPressed = false;
-    parent.add( controller );
-    controllers.push( controller );
-    
-    const grip = renderer.xr.getControllerGrip( i );
-    const mesh = cubeCreate({x: 0.02, y: 0.06, z: 0.02})
-    mesh.rotation.x = 0.9
-    // grip.add( controllerModelFactory.createControllerModel( grip ) );
-    grip.add( mesh );
-    parent.add( grip );
-  }
-  
-  return controllers;
-}
 
 // function selectPressed(){
 //   return ( controllers !== undefined && (controllers[0].userData.selectPressed || controllers[1].userData.selectPressed) );    
@@ -260,24 +189,4 @@ container.rotation.x = -0.55;
 
  // --------------------------
 
-function updateControllers () {
-  INTERSECTION = undefined
 
-  controllers.map(controller => {
-    if ( controller.userData.selectPressed === true ) {
-        tempMatrix.identity().extractRotation( controller.matrixWorld );
-
-        raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
-        raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
-
-        const intersects = raycaster.intersectObjects([teleportTarget ? teleportTarget : new THREE.Object3D]);
-
-        if ( intersects.length > 0 ) {
-            INTERSECTION = intersects[ 0 ].point;
-        }
-    }
-  })
-
-  if ( INTERSECTION ) marker.position.copy( INTERSECTION );
-  marker.visible = INTERSECTION !== undefined;
-}
