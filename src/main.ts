@@ -28,7 +28,8 @@ camera.position.y = 0.3;
 camera.rotation.x = -0.2
 
 const scene = new THREE.Scene();
-setBackgroundColor('#00aaff')  // -!!! for Scene
+// setBackgroundColor('#00aaff')  // -!!! for Scene
+cubeTextureInit()
 
 // renderer
 const renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -112,11 +113,23 @@ function animation( time: number ) {
 // Нужен параметр текущего окружения, который можно перезаписывать. currentEnvironment
 // --------------------------//
 
-function setBackgroundColor (bgColor: string | number) {
-  scene.background = new THREE.Color(bgColor);
-  // scene.fog = new THREE.FogExp2(bgColor, 0.01);
-  scene.fog = new THREE.Fog( bgColor, 10, 70 );
+function cubeTextureInit() {
+  const reflectionCube = new THREE.CubeTextureLoader()
+        .setPath('/cube/' )
+        .load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] )
+    reflectionCube.encoding = THREE.sRGBEncoding;
+
+    // scene = new THREE.Scene();
+    scene.background = reflectionCube;
+  
 }
+
+
+// function setBackgroundColor (bgColor: string | number) {
+//   scene.background = new THREE.Color(bgColor);
+//   // scene.fog = new THREE.FogExp2(bgColor, 0.01);
+//   scene.fog = new THREE.Fog( bgColor, 10, 70 );
+// }
 
 // const listEnvs = ['Env_1', 'Env_2', 'Env_3']
 // console.log(scene.getObjectByName('Env_1'))

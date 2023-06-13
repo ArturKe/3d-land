@@ -10,6 +10,11 @@ export function envGen (nameGroup: string = 'Environment_0') {
     envGroup.add(createLights())
     envGroup.add(geometryFloor())
     
+    const url0 ='https://file-server-u2kw.onrender.com/pine_tree_ver3.glb'
+    // const url1 ='http://localhost:3000/pine_tree_ver3.glb'
+    // const url2 = 'http://localhost:3000/download?name=pine_tree_ver3.glb'
+    fileLoader(url0, envGroup, {x: -4, y: 0, z: -3}, 0.8)
+    // fileLoader('./farm_house_ver1.glb', envGroup, {x: 2, y: 0, z: -3}, 2)
     fileLoader('./farm_house_ver1.glb', envGroup, {x: 0, y: 0, z: -3}, 2)
     fileLoader('./venus-ver1_2k.glb', envGroup, {x: 4, y: 0, z: -3}, 0.3)
     // fileLoader('./Venus_LOD_1.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
