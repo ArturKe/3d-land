@@ -53,7 +53,14 @@ initControllers(renderer, scene, camera)
 
 function cubeCreate (size: {x: number, y: number, z: number}) {
   const geometry = new THREE.BoxGeometry( size.x, size.y, size.z );
-  const material = new THREE.MeshNormalMaterial();
+  // const material = new THREE.MeshNormalMaterial();
+  const material = new THREE.MeshStandardMaterial();
+  const texture = new THREE.TextureLoader().load('/cat-image.jpg')
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.repeat.set( 2, 2 );
+
+  material.map = texture
   return new THREE.Mesh( geometry, material );
 }
 
