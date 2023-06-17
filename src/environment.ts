@@ -9,32 +9,32 @@ interface intStructure {
   scale: number
 }
 
-const structure: intStructure[] = [
-  {
-    url: 'https://file-server-u2kw.onrender.com/download?name=pine_tree_ver3.glb',
-    description: 'Pine',
-    position: {x: -4, y: 0, z: -3},
-    scale: 0.8
-  },
-  {
-    url: 'https://file-server-u2kw.onrender.com/files/pine_tree_ver3.glb',
-    description: 'Pine2',
-    position: {x: -6, y: 0, z: -3},
-    scale: 1.2
-  },
-  {
-    url: 'https://file-server-u2kw.onrender.com/download?name=cow_edit_ver1.glb',
-    description: 'Pine2',
-    position: {x: -8, y: 0, z: -3},
-    scale: 1
-  },
-  {
-    url: 'https://file-server-u2kw.onrender.com/files/cow_edit_ver1.glb',
-    description: 'Pine2',
-    position: {x: -9, y: 0, z: -3},
-    scale: 0.5
-  }
-]
+// const structure: intStructure[] = [
+//   {
+//     url: 'https://file-server-u2kw.onrender.com/download?name=pine_tree_ver3.glb',
+//     description: 'Pine',
+//     position: {x: -4, y: 0, z: -3},
+//     scale: 0.8
+//   },
+//   {
+//     url: 'https://file-server-u2kw.onrender.com/files/pine_tree_ver3.glb',
+//     description: 'Pine2',
+//     position: {x: -6, y: 0, z: -3},
+//     scale: 1.2
+//   },
+//   {
+//     url: 'https://file-server-u2kw.onrender.com/download?name=cow_edit_ver1.glb',
+//     description: 'Pine2',
+//     position: {x: -8, y: 0, z: -3},
+//     scale: 1
+//   },
+//   {
+//     url: 'https://file-server-u2kw.onrender.com/files/cow_edit_ver1.glb',
+//     description: 'Pine2',
+//     position: {x: -9, y: 0, z: -3},
+//     scale: 0.5
+//   }
+// ]
 
 async function fetchLoader (group: THREE.Group) {
   let response = await fetch('https://file-server-u2kw.onrender.com/map')
