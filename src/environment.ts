@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier.js';
+// import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier.js';
 
 interface intStructure {
   url: string,
@@ -66,7 +66,8 @@ export function envGen (nameGroup: string = 'Environment_0') {
     // const url2 = 'http://localhost:3000/download?name=pine_tree_ver3.glb'
     // fileLoader(url0, envGroup, {x: -4, y: 0, z: -3}, 0.8)
     fileLoader('./farm_house_ver1.glb', envGroup, {x: 0, y: 0, z: -3}, 2)
-    fileLoader2('./venus-ver1_2k.glb', envGroup, {x: 4, y: 0, z: -3}, 0.0007)
+    // fileLoader2('./venus-ver1_2k.glb', envGroup, {x: 4, y: 0, z: -3}, 0.0007)
+    fileLoader2('./venus-lod.glb', envGroup, {x: 4, y: 0, z: -3}, 0.0007)
     // fileLoader('./Venus_LOD_1.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
     fileLoader('./building2.glb', envGroup, {x: 10, y: 0, z: -30}, 1)
   
@@ -150,18 +151,13 @@ function fileLoader (link:string, parent:THREE.Group, pos: {x: number, y: number
 }
 
 function fileLoader2 (link:string, parent:THREE.Group, pos: {x: number, y: number, z: number}, scale: number = 1) {
-  const loader = new GLTFLoader();
+  const loader = new GLTFLoader()
 
-  // const modifier = new SimplifyModifier();
-  // simplified.geometry = modifier.modify( simplified.geometry, 1000 );
-
-  // const mesh = new THREE.Mesh( geometry[ i ][ 0 ], material )
-  // lod.addLevel( mesh, geometry[ i ][ 1 ] );
-  // parent.add(lod)
-
-  loader.load(link, (object) => {
+  loader.load(link, async (object) => {
     console.log(object)
-    // traversChildren(object.scene)
+    let meshes = {}
+    const allMeshes = traversChildren(object.scene, meshes)
+    console.log(allMeshes)
 
     object.scene.traverse((item: any) => {
       // if (child instanceof Mesh) { ... }
@@ -169,56 +165,86 @@ function fileLoader2 (link:string, parent:THREE.Group, pos: {x: number, y: numbe
       // if ( (<THREE.Mesh> item).isMesh ) {
       if(item.type === 'Mesh'){
         const lod = new THREE.LOD();
-        console.log('Mesh name: ' + item.name)
-        console.log('Vetr count: ' + item.geometry.attributes.position.count)
-        lod.addLevel( item, 1 );
-        item.position.set(pos.x, pos.y, pos.z)
-        item.scale.set(scale,scale,scale)
-        let i = 0
-        const distances = [5, 10, 15]
-        const reduceCount = [0, 0.2, 0.5]
-        while (i < 3) {
-          const mesh = item.clone()
-          polyReduce(mesh, reduceCount[i])
-          mesh.position.set(pos.x, pos.y, pos.z)
-          mesh.scale.set(scale,scale,scale)
-          lod.addLevel( mesh, distances[i] );
-          parent.add(lod)
-          i += 1
+
+        const meshName = item.name || ''
+        const meshVertCount = item.geometry.attributes.position.count
+        console.log('Mesh name: ' + meshName)
+        console.log('Vetr count: ' + meshVertCount)
+
+        const isLOD = meshName.indexOf('LOD')
+        if (isLOD) {
+          const lodName = meshName.slice(isLOD)
+          const lodNumber = Number(lodName.slice(3))
+          console.log(lodNumber)
         }
-        // polyReduce (item)
-        item.position.set(pos.x, pos.y, pos.z)
+
         item.scale.set(scale,scale,scale)
-        // item.rotation.y = 1.5
-        // parent.add(item)
+        // item.updateMatrix()
+        // item.matrixAutoUpdate = false
+        lod.addLevel( item, 2 );
+
+        // Boud box for very far LOD
+        const bboxMax = item.geometry.boundingBox.max
+        const bboxMin = item.geometry.boundingBox.min
+        const bboxSize = {width: bboxMax.x - bboxMin.x, depth: bboxMax.y - bboxMin.y, height: bboxMax.z - bboxMin.z}
+
+        const geometry = new THREE.BoxGeometry( bboxSize.width, bboxSize.height, bboxSize.depth );
+        const material = new THREE.MeshStandardMaterial({
+          color: 0x858585
+        });
+        const bbox = new THREE.Mesh( geometry, material );
+        bbox.position.y = (bboxSize.height/2)*scale
+        bbox.scale.set(scale,scale,scale)
+
+        lod.addLevel( bbox, 30 );
+
+        // let i = 0
+        // const distances = [5, 10, 15]
+        // const reduceCount = [0.1, 0.2, 0.5]
+        // while (i < 3) {
+        //   const mesh = item.clone()
+        //   polyReduce(mesh, reduceCount[i])
+        //   mesh.scale.set(scale,scale,scale)
+        //   mesh.updateMatrix()
+				// 	mesh.matrixAutoUpdate = false
+          
+        //   lod.addLevel( mesh, distances[i] );
+        //   console.log(lod)
+          
+        //   i += 1
+        // }
+
+        lod.position.set(pos.x, pos.y, pos.z)
+        parent.add(lod)
       }
     })
-    // object.scene.position.set(pos.x, pos.y, pos.z)
-    // object.scene.scale.set(scale,scale,scale)
-    // object.scene.rotation.y = 1.5
-    // parent.add(object.scene)
   })
 }
 
-// function traversChildren (object: any) {
-//   if (object.type === 'Mesh') {
-//     console.log('Here is MEsh')
-//     console.log(object.name)
-//   }
-//   if ( (object.children || []).length >= 1) {
-//     object.children.forEach((child: any) => traversChildren (child))
-//   }
+function traversChildren (object: any, allMeshes: any = {}) {
+  if ( (object.children || []).length >= 1) {
+    object.children.forEach((child: any) => {
+      allMeshes = {...allMeshes, ...traversChildren (child, allMeshes)}
+    })
+  }
+  if (object.type === 'Mesh') {
+    console.log('Here is MEsh')
+    console.log(object.name)
+    allMeshes = {...allMeshes, [object.name]: object}
+    return allMeshes
+  }
+  return allMeshes
+}
+
+// function polyReduce (mesh: THREE.Mesh, count: number = 0.5) {
+//   const modifier = new SimplifyModifier();
+//   const countDel = Math.floor( mesh.geometry.attributes.position.count * count ); // number of vertices to remove
+//   mesh.geometry = modifier.modify( mesh.geometry, countDel ); // count to remove
+//   console.log('Verts count after reduce: ' + mesh.geometry.attributes.position.count)
+//   const newMat = new THREE.MeshStandardMaterial({
+//     color: 0x6b6d70
+//   })
+//   newMat.flatShading = true
+//   mesh.material = newMat
+//   return mesh
 // }
-
-function polyReduce (mesh: THREE.Mesh, count: number = 0.5) {
-  const modifier = new SimplifyModifier();
-  const countDel = Math.floor( mesh.geometry.attributes.position.count * count ); // number of vertices to remove
-  mesh.geometry = modifier.modify( mesh.geometry, countDel ); // count to remove
-  console.log('Verts count after reduce: ' + mesh.geometry.attributes.position.count)
-  const newMat = new THREE.MeshStandardMaterial({
-    color: 0x6b6d70
-  })
-  newMat.flatShading = true
-  mesh.material = newMat
-  return mesh
-}
