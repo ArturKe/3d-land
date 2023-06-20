@@ -150,91 +150,93 @@ function fileLoader (link:string, parent:THREE.Group, pos: {x: number, y: number
   })
 }
 
-function fileLoader2 (link:string, parent:THREE.Group, pos: {x: number, y: number, z: number}, scale: number = 1) {
+async function fileLoader2 (link:string, parent:THREE.Group, pos: {x: number, y: number, z: number}, scale: number = 1) {
   const loader = new GLTFLoader()
 
-  loader.load(link, async (object) => {
+  loader.load(link, async(object) => {
     console.log(object)
-    let meshes = {}
-    const allMeshes = traversChildren(object.scene, meshes)
-    console.log(allMeshes)
+    let meshes: any = {}
 
     object.scene.traverse((item: any) => {
-      // if (child instanceof Mesh) { ... }
-      // if((item as THREE.Mesh).isMesh) {
-      // if ( (<THREE.Mesh> item).isMesh ) {
       if(item.type === 'Mesh'){
-        const lod = new THREE.LOD();
-
-        const meshName = item.name || ''
-        const meshVertCount = item.geometry.attributes.position.count
-        console.log('Mesh name: ' + meshName)
-        console.log('Vetr count: ' + meshVertCount)
-
-        const isLOD = meshName.indexOf('LOD')
-        if (isLOD) {
-          const lodName = meshName.slice(isLOD)
-          const lodNumber = Number(lodName.slice(3))
-          console.log(lodNumber)
-        }
-
-        item.scale.set(scale,scale,scale)
-        // item.updateMatrix()
-        // item.matrixAutoUpdate = false
-        lod.addLevel( item, 2 );
-
-        // Boud box for very far LOD
-        const bboxMax = item.geometry.boundingBox.max
-        const bboxMin = item.geometry.boundingBox.min
-        const bboxSize = {width: bboxMax.x - bboxMin.x, depth: bboxMax.y - bboxMin.y, height: bboxMax.z - bboxMin.z}
-
-        const geometry = new THREE.BoxGeometry( bboxSize.width, bboxSize.height, bboxSize.depth );
-        const material = new THREE.MeshStandardMaterial({
-          color: 0x858585
-        });
-        const bbox = new THREE.Mesh( geometry, material );
-        bbox.position.y = (bboxSize.height/2)*scale
-        bbox.scale.set(scale,scale,scale)
-
-        lod.addLevel( bbox, 30 );
-
-        // let i = 0
-        // const distances = [5, 10, 15]
-        // const reduceCount = [0.1, 0.2, 0.5]
-        // while (i < 3) {
-        //   const mesh = item.clone()
-        //   polyReduce(mesh, reduceCount[i])
-        //   mesh.scale.set(scale,scale,scale)
-        //   mesh.updateMatrix()
-				// 	mesh.matrixAutoUpdate = false
-          
-        //   lod.addLevel( mesh, distances[i] );
-        //   console.log(lod)
-          
-        //   i += 1
-        // }
-
-        lod.position.set(pos.x, pos.y, pos.z)
-        parent.add(lod)
+       console.log(item.name)
+       meshes[item.name] = item
       }
     })
+    console.log(meshes)
+    const lods = await checkLods(meshes)
+    console.log(lods)
+    if (Object.keys(lods).length > 0) applyLods(lods, parent, pos, scale)
+    // Все что не лоды размещаем по указанным позициям в меше
+    // if (Object.keys(noLods).length > 0) applyPositions(lods, parent, scale)
   })
 }
 
-function traversChildren (object: any, allMeshes: any = {}) {
-  if ( (object.children || []).length >= 1) {
-    object.children.forEach((child: any) => {
-      allMeshes = {...allMeshes, ...traversChildren (child, allMeshes)}
-    })
-  }
-  if (object.type === 'Mesh') {
-    console.log('Here is MEsh')
-    console.log(object.name)
-    allMeshes = {...allMeshes, [object.name]: object}
-    return allMeshes
-  }
-  return allMeshes
+async function checkLods (files: any = {}) {
+  let lods: any = {}
+  let noLods: any = {}
+  Object.keys(files).forEach(key => {
+    const isLOD = key.indexOf('LOD')
+    if (isLOD) {
+      const fileName = key.slice(0, isLOD)
+      const lodName = key.slice(isLOD)
+      const lodNumber = Number(lodName.slice(3))
+      console.log(lodNumber)
+      lods[fileName] = {...(lods[fileName] ? lods[fileName] : {}), [lodName]: files[key]  }
+    } else {
+      // Складываем файлы которые не LOD
+      noLods[key] = {...(noLods[key] ? noLods[key] : {}), [key]: files[key]  }
+    }
+  })
+  console.log({lods, noLods})
+  return lods
 }
+
+function applyLods (lods:any = {}, parent: THREE.Group, pos: {x: number, y: number , z: number}, scale: number) {
+  Object.keys(lods).forEach(fileName => {
+    const lod = new THREE.LOD()
+    lod.name = fileName
+    let bboxMesh: any = Object.values(lods[fileName])[0]
+
+    Object.values(lods[fileName]).forEach((mesh: any, index) => {
+      if (index === 0) bboxMesh = mesh
+      mesh.scale.set(scale,scale,scale)
+      lod.addLevel( mesh, 10 * (index + 1))
+    })
+    // Boud box for very far LOD
+    const bboxMax = bboxMesh.geometry.boundingBox.max
+    const bboxMin = bboxMesh.geometry.boundingBox.min
+    const bboxSize = {width: bboxMax.x - bboxMin.x, depth: bboxMax.y - bboxMin.y, height: bboxMax.z - bboxMin.z}
+
+    const geometry = new THREE.BoxGeometry( bboxSize.width, bboxSize.height, bboxSize.depth );
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x858585
+    });
+    const bbox = new THREE.Mesh( geometry, material );
+    bbox.position.y = (bboxSize.height/2)*scale
+    bbox.scale.set(scale,scale,scale)
+
+    lod.addLevel( bbox, 30 )
+    lod.position.set(pos.x, pos.y, pos.z)
+    console.log(lod)
+    parent.add(lod)
+  })
+}
+
+// function traversChildren (object: any, allMeshes: any = {}) {
+//   if ( (object.children || []).length >= 1) {
+//     object.children.forEach((child: any) => {
+//       allMeshes = {...allMeshes, ...traversChildren (child, allMeshes)}
+//     })
+//   }
+//   if (object.type === 'Mesh') {
+//     console.log('Here is MEsh')
+//     console.log(object.name)
+//     allMeshes = {...allMeshes, [object.name]: object}
+//     return allMeshes
+//   }
+//   return allMeshes
+// }
 
 // function polyReduce (mesh: THREE.Mesh, count: number = 0.5) {
 //   const modifier = new SimplifyModifier();
