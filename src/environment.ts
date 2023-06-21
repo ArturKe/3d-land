@@ -67,9 +67,10 @@ export function envGen (nameGroup: string = 'Environment_0') {
     // fileLoader(url0, envGroup, {x: -4, y: 0, z: -3}, 0.8)
     fileLoader('./farm_house_ver1.glb', envGroup, {x: 0, y: 0, z: -3}, 2)
     // fileLoader2('./venus-ver1_2k.glb', envGroup, {x: 4, y: 0, z: -3}, 0.0007)
-    fileLoader2('./venus-lod.glb', envGroup, {x: 4, y: 0, z: -3}, 0.0007)
+    fileLoader2('./venus-lod2.glb', envGroup, {x: 4, y: 0, z: -3}, 0.0007)
     // fileLoader('./Venus_LOD_1.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
     fileLoader('./building2.glb', envGroup, {x: 10, y: 0, z: -30}, 1)
+    // clonizator(10, envGroup)
   
     return envGroup
   }
@@ -123,7 +124,13 @@ export function envGen (nameGroup: string = 'Environment_0') {
 
     floorGroup.add(grid)
     return floorGroup
-  }		
+  }
+
+// function clonizator (copiesNum: number, scene:THREE.Object3D) {
+//   const object = scene.getObjectByName('Venus_')
+//   debugger
+
+// }
   
   // const ground = new THREE.Mesh( new THREE.PlaneBufferGeometry( 200, 200 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
   // ground.rotation.x = - Math.PI / 2;
@@ -219,6 +226,12 @@ function applyLods (lods:any = {}, parent: THREE.Group, pos: {x: number, y: numb
     lod.addLevel( bbox, 30 )
     lod.position.set(pos.x, pos.y, pos.z)
     console.log(lod)
+    for (let i = 0; i < 10; i++) {
+      const newLod = lod.clone()
+      newLod.position.x = pos.x + 5*i
+      parent.add(newLod)
+      console.log(newLod)
+    }
     parent.add(lod)
   })
 }
