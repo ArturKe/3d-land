@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { XRHandModelFactory } from 'three/examples/jsm/webxr/XRHandModelFactory.js'
+import { OculusHandPointerModel } from 'three/examples/jsm/webxr/OculusHandPointerModel.js';
 
 const handModelFactory = new XRHandModelFactory()
 
@@ -139,8 +140,12 @@ export function initControllers (renderer: any, parent: THREE.Scene, camera: THR
   // Hand models
   let hand1 = renderer.xr.getHand( 0 )
   hand1.add( handModelFactory.createHandModel( hand1, 'boxes' ) )
+  const handPointer1 = new OculusHandPointerModel( hand1, hand1 )
+  hand1.add( handPointer1 )
+
   hand1.addEventListener( 'pinchend', function () {console.log('Pinched')})
   dolly.add(hand1)
+
   let hand2 = renderer.xr.getHand( 1 )
 	hand2.add( handModelFactory.createHandModel( hand2, 'boxes' ) )
   dolly.add(hand2)
