@@ -210,7 +210,10 @@ export function updateControllers (teleportTarget: THREE.Object3D) {
     })
     hands.map((hand: any) => {
       // console.log(hand.children[1])
-      hand.children[1].checkIntersections(teleportTarget)
+      // let distance = null
+      hand.children[1].checkIntersections([teleportTarget])
+      // const intersections = hand.intersectObject( [teleportTarget], false )
+      // if ( intersections && intersections.length > 0 ) {}
     })
   
     if ( INTERSECTION ) marker.position.copy( INTERSECTION );
