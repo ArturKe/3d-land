@@ -9,6 +9,7 @@ const raycaster = new THREE.Raycaster()
 const tempMatrix = new THREE.Matrix4()
 let INTERSECTION: THREE.Vector3 | undefined
 let controllers: THREE.Group[]
+let hands: THREE.Group[]
 let marker: THREE.Mesh
 
 export function character () {
@@ -138,17 +139,38 @@ export function initControllers (renderer: any, parent: THREE.Scene, camera: THR
   })
 
   // Hand models
-  let hand1 = renderer.xr.getHand( 0 )
-  hand1.add( handModelFactory.createHandModel( hand1, 'boxes' ) )
-  const handPointer1 = new OculusHandPointerModel( hand1, hand1 )
-  hand1.add( handPointer1 )
+  // let hand1 = renderer.xr.getHand( 0 )
+  // hand1.add( handModelFactory.createHandModel( hand1, 'boxes' ) )
+  // const handPointer1 = new OculusHandPointerModel( hand1, hand1 )
+  // hand1.add( handPointer1 )
 
-  hand1.addEventListener( 'pinchend', function () {console.log('Pinched')})
-  dolly.add(hand1)
+  // hand1.addEventListener( 'pinchend', function () {console.log('Pinched')})
+  // dolly.add(hand1)
 
-  let hand2 = renderer.xr.getHand( 1 )
-	hand2.add( handModelFactory.createHandModel( hand2, 'boxes' ) )
-  dolly.add(hand2)
+  // let hand2 = renderer.xr.getHand( 1 )
+	// hand2.add( handModelFactory.createHandModel( hand2, 'boxes' ) )
+  // dolly.add(hand2)
+
+  hands = buildHands(dolly)
+
+  hands.forEach((controller) => {
+    controller.addEventListener( 'connected', (e) => {console.log(e)} )
+    controller.addEventListener( 'pinchend', (e) => {console.log(e)});
+    // controller.addEventListener( 'selectend', onSelectEnd );
+  })
+
+  function buildHands ( parent: THREE.Object3D ) {
+    let hands: any = []
+    for(let i=0; i<=1; i++){
+      let hand = renderer.xr.getHand( i )
+      const handPointer = new OculusHandPointerModel( hand, controllers[i] )
+      hand.add( handModelFactory.createHandModel( hand, 'boxes' ) )
+      hand.add(handPointer)
+      hands.push(hand)
+      parent.add(hand)
+    }
+    return hands
+  }
 
   function buildControllers( parent: THREE.Object3D ){
     // const controllerModelFactory = new XRControllerModelFactory();
