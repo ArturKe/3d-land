@@ -1,8 +1,11 @@
-import * as THREE from 'three';
+import * as THREE from 'three'
+import { XRHandModelFactory } from 'three/examples/jsm/webxr/XRHandModelFactory.js'
+
+const handModelFactory = new XRHandModelFactory()
 
 // let baseReferenceSpace: XRReferenceSpace | null
-const raycaster = new THREE.Raycaster();
-const tempMatrix = new THREE.Matrix4();
+const raycaster = new THREE.Raycaster()
+const tempMatrix = new THREE.Matrix4()
 let INTERSECTION: THREE.Vector3 | undefined
 let controllers: THREE.Group[]
 let marker: THREE.Mesh
@@ -37,8 +40,8 @@ export function updateButtonsInfo (inputSources: any[]) {
       info.push({ gamepad, handedness, profiles, targetRayMode });
     });
         
-    console.log( JSON.stringify(info) );   
-    getInputSources = false;
+    console.log( JSON.stringify(info) ) 
+    getInputSources = false
 
 } else if (useStandard && type!=""){
   // console.log('Moove')
@@ -47,8 +50,8 @@ export function updateButtonsInfo (inputSources: any[]) {
       left: {}
   }
   inputSources.forEach( inputSource => {
-    const gp = inputSource.gamepad;
-    const thumbstick = (type=='thumbstick');
+    const gp = inputSource.gamepad
+    const thumbstick = (type=='thumbstick')
     const offset = (thumbstick) ? 2 : 0;
     const btnIndex = (thumbstick) ? 3 : 2;
     const btnPressed = gp.buttons[btnIndex].pressed;
@@ -79,83 +82,91 @@ export function updateButtonsInfo (inputSources: any[]) {
 
 export function initControllers (renderer: any, parent: THREE.Scene, camera: THREE.Camera) {
 
-// Teleport
-marker = new THREE.Mesh(
-// new THREE.CircleGeometry( 0.25, 32 ).rotateX( - Math.PI / 2 ),
-new THREE.TorusGeometry( 0.1, 0.03, 4, 18 ).rotateX( - Math.PI / 2 ), 
-new THREE.MeshBasicMaterial( { color: 0x808080 } )
-);
-marker.visible = false
-parent.add( marker );
+  // Teleport
+  marker = new THREE.Mesh(
+  // new THREE.CircleGeometry( 0.25, 32 ).rotateX( - Math.PI / 2 ),
+  new THREE.TorusGeometry( 0.1, 0.03, 4, 18 ).rotateX( - Math.PI / 2 ), 
+  new THREE.MeshBasicMaterial( { color: 0x808080 } )
+  )
+  marker.visible = false
+  parent.add( marker )
 
-let dolly = new THREE.Object3D(  );
-// dolly.position.set(0, 0, 2);
-dolly.add( camera );
-let dummyCam = new THREE.Object3D();
-// camera.add( dummyCam );
-parent.add( dolly )
-// let origin = new THREE.Vector3(); // For dolly
+  let dolly = new THREE.Object3D(  );
+  // dolly.position.set(0, 0, 2);
+  dolly.add( camera );
+  let dummyCam = new THREE.Object3D();
+  // camera.add( dummyCam );
+  parent.add( dolly )
+  // let origin = new THREE.Vector3(); // For dolly
 
 
-function onSelectStart(this: any, event: any) {    
-  this.userData.selectPressed = true;
-  console.log(event)
-  console.log(this)
-}
-
-function onSelectEnd(this: any) {
-  this.userData.selectPressed = false;
-//   let teleportSpaceOffset: XRReferenceSpace
-
-  // console.log(event)
-  if ( INTERSECTION !== undefined ) {
-    // const offsetPosition = { x: - INTERSECTION.x, y: - INTERSECTION.y, z: - INTERSECTION.z, w: 1 };
-    // const offsetRotation = new THREE.Quaternion();
-    // const transform = new XRRigidTransform( offsetPosition, offsetRotation );
-    // if (baseReferenceSpace !== null) {
-    //   teleportSpaceOffset = baseReferenceSpace.getOffsetReferenceSpace( transform )
-    //   renderer.xr.setReferenceSpace( teleportSpaceOffset );
-    // }
-    dolly.position.set(INTERSECTION.x, INTERSECTION.y, INTERSECTION.z)
-  } 
-}
-
-controllers = buildControllers(dolly);
-
-controllers.forEach((controller) => {
-  controller.addEventListener( 'connected', (e) => {console.log(e)} )
-  controller.addEventListener( 'selectstart', onSelectStart);
-  controller.addEventListener( 'selectend', onSelectEnd );
-});
-
-function buildControllers( parent: THREE.Object3D ){
-  // const controllerModelFactory = new XRControllerModelFactory();
-  const geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, -1 ) ] );
-
-  const line = new THREE.Line( geometry );
-  line.scale.z = 1;
-  
-  const controllers = [];
-  
-  for(let i=0; i<=1; i++){
-    const controller = renderer.xr.getController( i );
-    controller.add( line.clone() );
-    if (i === 0) controller.add(dummyCam)
-    controller.userData.selectPressed = false;
-    parent.add( controller );
-    controllers.push( controller );
-    
-    const grip = renderer.xr.getControllerGrip( i );
-    const mesh = cubeCreate({x: 0.02, y: 0.02, z: 0.06})
-    // mesh.rotation.x = 0.9
-    controller.add(mesh)
-    // grip.add( controllerModelFactory.createControllerModel( grip ) );
-    // grip.add( mesh );
-    parent.add( grip );
+  function onSelectStart(this: any, event: any) {    
+    this.userData.selectPressed = true;
+    console.log(event)
+    console.log(this)
   }
-  
-  return controllers;
-}
+
+  function onSelectEnd(this: any) {
+    this.userData.selectPressed = false;
+  //   let teleportSpaceOffset: XRReferenceSpace
+
+    // console.log(event)
+    if ( INTERSECTION !== undefined ) {
+      // const offsetPosition = { x: - INTERSECTION.x, y: - INTERSECTION.y, z: - INTERSECTION.z, w: 1 };
+      // const offsetRotation = new THREE.Quaternion();
+      // const transform = new XRRigidTransform( offsetPosition, offsetRotation );
+      // if (baseReferenceSpace !== null) {
+      //   teleportSpaceOffset = baseReferenceSpace.getOffsetReferenceSpace( transform )
+      //   renderer.xr.setReferenceSpace( teleportSpaceOffset );
+      // }
+      dolly.position.set(INTERSECTION.x, INTERSECTION.y, INTERSECTION.z)
+    } 
+  }
+
+  controllers = buildControllers(dolly)
+
+  controllers.forEach((controller) => {
+    controller.addEventListener( 'connected', (e) => {console.log(e)} )
+    controller.addEventListener( 'selectstart', onSelectStart);
+    controller.addEventListener( 'selectend', onSelectEnd );
+  })
+
+  let hand1 = renderer.xr.getHand( 0 )
+  hand1.add( handModelFactory.createHandModel( hand1, 'boxes' ) )
+  parent.add(hand1)
+  let hand2 = renderer.xr.getHand( 1 )
+	hand2.add( handModelFactory.createHandModel( hand2, 'boxes' ) )
+  parent.add(hand2)
+  hand1.addEventListener( 'pinchend', function () {console.log('Pinched')})
+
+  function buildControllers( parent: THREE.Object3D ){
+    // const controllerModelFactory = new XRControllerModelFactory();
+    const geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, -1 ) ] )
+
+    const line = new THREE.Line( geometry )
+    line.scale.z = 1
+    
+    const controllers = []
+    
+    for(let i=0; i<=1; i++){
+      const controller = renderer.xr.getController( i )
+      controller.add( line.clone() )
+      if (i === 0) controller.add(dummyCam)
+      controller.userData.selectPressed = false
+      parent.add( controller )
+      controllers.push( controller )
+      
+      const grip = renderer.xr.getControllerGrip( i );
+      const mesh = cubeCreate({x: 0.02, y: 0.02, z: 0.06})
+      // mesh.rotation.x = 0.9
+      controller.add(mesh)
+      // grip.add( controllerModelFactory.createControllerModel( grip ) );
+      // grip.add( mesh );
+      parent.add( grip );
+    }
+    
+    return controllers;
+  }
 
 }
 
@@ -182,7 +193,7 @@ export function updateControllers (teleportTarget: THREE.Object3D) {
   }
 
   function cubeCreate (size: {x: number, y: number, z: number}) {
-    const geometry = new THREE.BoxGeometry( size.x, size.y, size.z );
-    const material = new THREE.MeshNormalMaterial();
-    return new THREE.Mesh( geometry, material );
+    const geometry = new THREE.BoxGeometry( size.x, size.y, size.z )
+    const material = new THREE.MeshNormalMaterial()
+    return new THREE.Mesh( geometry, material )
   }
