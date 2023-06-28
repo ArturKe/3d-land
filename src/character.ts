@@ -85,8 +85,13 @@ export function initControllers (renderer: any, parent: THREE.Scene, camera: THR
   // Teleport
   marker = new THREE.Mesh(
   // new THREE.CircleGeometry( 0.25, 32 ).rotateX( - Math.PI / 2 ),
-  new THREE.TorusGeometry( 0.1, 0.03, 4, 18 ).rotateX( - Math.PI / 2 ), 
-  new THREE.MeshBasicMaterial( { color: 0x808080 } )
+  new THREE.TorusGeometry( 0.12, 0.03, 4, 24 ).rotateX( - Math.PI / 2 ), 
+  // new THREE.MeshBasicMaterial( { color: 0x808080 } )
+  new THREE.MeshStandardMaterial({
+    color: 0x51a3f0,
+    emissive: 0x51a3f0,
+    emissiveIntensity: 2.5
+  })
   )
   marker.visible = false
   parent.add( marker )
@@ -131,13 +136,14 @@ export function initControllers (renderer: any, parent: THREE.Scene, camera: THR
     controller.addEventListener( 'selectend', onSelectEnd );
   })
 
+  // Hand models
   let hand1 = renderer.xr.getHand( 0 )
   hand1.add( handModelFactory.createHandModel( hand1, 'boxes' ) )
-  parent.add(hand1)
+  hand1.addEventListener( 'pinchend', function () {console.log('Pinched')})
+  dolly.add(hand1)
   let hand2 = renderer.xr.getHand( 1 )
 	hand2.add( handModelFactory.createHandModel( hand2, 'boxes' ) )
-  parent.add(hand2)
-  hand1.addEventListener( 'pinchend', function () {console.log('Pinched')})
+  dolly.add(hand2)
 
   function buildControllers( parent: THREE.Object3D ){
     // const controllerModelFactory = new XRControllerModelFactory();
