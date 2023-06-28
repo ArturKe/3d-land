@@ -139,18 +139,6 @@ export function initControllers (renderer: any, parent: THREE.Scene, camera: THR
   })
 
   // Hand models
-  // let hand1 = renderer.xr.getHand( 0 )
-  // hand1.add( handModelFactory.createHandModel( hand1, 'boxes' ) )
-  // const handPointer1 = new OculusHandPointerModel( hand1, hand1 )
-  // hand1.add( handPointer1 )
-
-  // hand1.addEventListener( 'pinchend', function () {console.log('Pinched')})
-  // dolly.add(hand1)
-
-  // let hand2 = renderer.xr.getHand( 1 )
-	// hand2.add( handModelFactory.createHandModel( hand2, 'boxes' ) )
-  // dolly.add(hand2)
-
   hands = buildHands(dolly)
 
   hands.forEach((controller) => {
@@ -219,6 +207,10 @@ export function updateControllers (teleportTarget: THREE.Object3D) {
               INTERSECTION = intersects[ 0 ].point;
           }
       }
+    })
+    hands.map((hand: any) => {
+      // console.log(hand.children[1])
+      hand.children[1].checkIntersections(teleportTarget)
     })
   
     if ( INTERSECTION ) marker.position.copy( INTERSECTION );
