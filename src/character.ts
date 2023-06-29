@@ -209,11 +209,14 @@ export function updateControllers (teleportTarget: THREE.Object3D) {
       }
     })
     hands.map((hand: any) => {
-      // console.log(hand.children[1])
-      // let distance = null
       hand.children[1].checkIntersections([teleportTarget])
-      // const intersections = hand.intersectObject( [teleportTarget], false )
-      // if ( intersections && intersections.length > 0 ) {}
+
+      // let distance = null
+      // const intersections = hand.children[1].intersectObject( [teleportTarget], false )
+      // if ( intersections && intersections.length > 0 ) {
+      //   distance = intersections[ 0 ].distance;
+      // }
+      // if ( distance ) hand.setCursor( distance )
     })
   
     if ( INTERSECTION ) marker.position.copy( INTERSECTION );

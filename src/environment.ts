@@ -67,7 +67,8 @@ export function envGen (nameGroup: string = 'Environment_0') {
     // fileLoader(url0, envGroup, {x: -4, y: 0, z: -3}, 0.8)
     fileLoader('./farm_house_ver1.glb', envGroup, {x: 0, y: 0, z: -3}, 2)
     // fileLoader2('./venus-ver1_2k.glb', envGroup, {x: 4, y: 0, z: -3}, 0.0007)
-    fileLoader2('./venus-lod2.glb', envGroup, {x: 4, y: 0, z: -3}, 0.0007)
+    fileLoader2('./venus_stand.glb', envGroup, {x: 4, y: 0, z: -3}, 0.25)
+    fileLoader2('./venus_stand.glb', envGroup, {x: 4, y: 0, z: -5}, 0.3)
     // fileLoader('./Venus_LOD_1.glb', envGroup, {x: 3, y: 0, z: -3}, 0.3)
     fileLoader('./building2.glb', envGroup, {x: 10, y: 0, z: -30}, 1)
     // clonizator(10, envGroup)
@@ -114,23 +115,15 @@ export function envGen (nameGroup: string = 'Environment_0') {
     floorGroup.add( floor );
   
     // Grid -------------------//
-    // const grid = new THREE.GridHelper(500,100)
 
+    // const grid: any = new THREE.GridHelper( 200, 40, 0x000000, 0x000000 );
+    // grid.position.y = offsetY + 0.03
+    // grid.material.opacity = 0.2;
+    // grid.material.transparent = true;
+    // floorGroup.add(grid)
 
-    var grid: any = new THREE.GridHelper( 200, 40, 0x000000, 0x000000 );
-    grid.position.y = offsetY + 0.03
-    grid.material.opacity = 0.2;
-    grid.material.transparent = true;
-
-    floorGroup.add(grid)
     return floorGroup
   }
-
-// function clonizator (copiesNum: number, scene:THREE.Object3D) {
-//   const object = scene.getObjectByName('Venus_')
-//   debugger
-
-// }
   
   // const ground = new THREE.Mesh( new THREE.PlaneBufferGeometry( 200, 200 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
   // ground.rotation.x = - Math.PI / 2;
@@ -162,7 +155,9 @@ async function fileLoader2 (link:string, parent:THREE.Group, pos: {x: number, y:
 
   loader.load(link, async(object) => {
     console.log(object)
+    // Собираем все меши в один обьект, имя: mesh
     let meshes: any = {}
+    const mainGroup = new THREE.Group
 
     object.scene.traverse((item: any) => {
       if(item.type === 'Mesh'){
@@ -170,12 +165,39 @@ async function fileLoader2 (link:string, parent:THREE.Group, pos: {x: number, y:
        meshes[item.name] = item
       }
     })
+
     console.log(meshes)
-    const lods = await checkLods(meshes)
-    console.log(lods)
-    if (Object.keys(lods).length > 0) applyLods(lods, parent, pos, scale)
+
+    const separatedMeshes = await checkLods(meshes)
+    console.log(separatedMeshes)
+
+    if (Object.keys(separatedMeshes.lods).length > 0) applyLods(separatedMeshes.lods, mainGroup, scale)
     // Все что не лоды размещаем по указанным позициям в меше
-    // if (Object.keys(noLods).length > 0) applyPositions(lods, parent, scale)
+    if (Object.keys(separatedMeshes.noLods).length > 0) applyPositions(separatedMeshes.noLods, mainGroup, scale)
+
+    mainGroup.position.set(pos.x, pos.y, pos.z)
+    parent.add(mainGroup)
+    console.log(mainGroup)
+    replictor(mainGroup, parent, {x:0, y:0, z:0}, 12)
+  })
+}
+
+function replictor (object: THREE.Group, parent: THREE.Group,  vector: {x: number, y: number , z: number} = {x:0, y:0, z:0}, count: number = 1, distance: number = 5) {
+  const currentPos = object.position.x
+  console.log(vector)
+  for (let i = 0; i < count; i++) {
+      const newObject = object.clone()
+      newObject.position.x = currentPos + distance*i
+      parent.add(newObject)
+  }
+}
+
+function applyPositions(files: Object,parent: THREE.Group, scale: number) {
+  Object.values(files).forEach((file: Object) => {
+    // debugger
+    const mesh: any = Object.values(file)[0]
+    mesh.scale.set(scale,scale,scale)
+    parent.add(mesh)
   })
 }
 
@@ -184,10 +206,11 @@ async function checkLods (files: any = {}) {
   let noLods: any = {}
   Object.keys(files).forEach(key => {
     const isLOD = key.indexOf('LOD')
-    if (isLOD) {
+    if (isLOD > 0) {
       const fileName = key.slice(0, isLOD)
       const lodName = key.slice(isLOD)
       const lodNumber = Number(lodName.slice(3))
+      // Сделать что бы лоды были упорядочены по номеру в названии!!!
       console.log(lodNumber)
       lods[fileName] = {...(lods[fileName] ? lods[fileName] : {}), [lodName]: files[key]  }
     } else {
@@ -195,11 +218,10 @@ async function checkLods (files: any = {}) {
       noLods[key] = {...(noLods[key] ? noLods[key] : {}), [key]: files[key]  }
     }
   })
-  console.log({lods, noLods})
-  return lods
+  return {lods, noLods}
 }
 
-function applyLods (lods:any = {}, parent: THREE.Group, pos: {x: number, y: number , z: number}, scale: number) {
+function applyLods (lods:any = {}, parent: THREE.Group, scale: number) {
   Object.keys(lods).forEach(fileName => {
     const lod = new THREE.LOD()
     lod.name = fileName
@@ -210,6 +232,8 @@ function applyLods (lods:any = {}, parent: THREE.Group, pos: {x: number, y: numb
       mesh.scale.set(scale,scale,scale)
       lod.addLevel( mesh, 10 * (index + 1))
     })
+    const lodsCount = Object.keys(lods[fileName]).length + 1
+    console.log('LODS count: ' + lodsCount)
     // Boud box for very far LOD
     const bboxMax = bboxMesh.geometry.boundingBox.max
     const bboxMin = bboxMesh.geometry.boundingBox.min
@@ -223,15 +247,17 @@ function applyLods (lods:any = {}, parent: THREE.Group, pos: {x: number, y: numb
     bbox.position.y = (bboxSize.height/2)*scale
     bbox.scale.set(scale,scale,scale)
 
-    lod.addLevel( bbox, 30 )
-    lod.position.set(pos.x, pos.y, pos.z)
+    lod.addLevel( bbox, lodsCount * 10 )
+    // lod.position.set(pos.x, pos.y, pos.z)
     console.log(lod)
-    for (let i = 0; i < 10; i++) {
-      const newLod = lod.clone()
-      newLod.position.x = pos.x + 5*i
-      parent.add(newLod)
-      console.log(newLod)
-    }
+
+    // Replicator
+    // for (let i = 0; i < 10; i++) {
+    //   const newLod = lod.clone()
+    //   newLod.position.x = pos.x + 5*i
+    //   parent.add(newLod)
+    //   console.log(newLod)
+    // }
     parent.add(lod)
   })
 }
